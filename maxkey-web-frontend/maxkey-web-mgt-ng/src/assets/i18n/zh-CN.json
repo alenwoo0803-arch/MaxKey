@@ -1,9 +1,9 @@
 {
-	"app.title": "身份安全管理系统",
+	"app.title": "GMC统一身份认证平台",
 	"mxk": {
-		"title": " 身份安全管理系统",
+		"title": "统一身份认证平台",
 		"login": {
-			"title": "MaxKey",
+			"title": "GMC统一身份认证平台",
 			"title.sub": "业界领先的IAM身份管理和认证产品",
 			"tab-credentials": "账号登录",
 			"tab-mobile": "手机登录",

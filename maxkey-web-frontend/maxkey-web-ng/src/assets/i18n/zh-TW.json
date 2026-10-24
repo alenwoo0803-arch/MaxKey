@@ -1,9 +1,9 @@
 {
-	"app.title": "單點登錄認證系統",
+	"app.title": "GMC統一身份認證平台",
 	"mxk": {
-		"title": "單點登錄認證系統",
+		"title": "統一身份認證平台",
 		"login": {
-			"title": "MaxKey",
+			"title": "GMC統一身份認證平台",
 			"title.sub": "業界領先的IAM身份管理和認證產品",
 			"tab-credentials": "賬號登錄",
 			"tab-mobile": "手機登錄",

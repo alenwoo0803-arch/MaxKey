@@ -29,8 +29,8 @@ export const CONSTS = {
   REMEMBER: 'remember_me',
   TOKEN: '_token',
   VERSION: 'v4.2.0 GA',
-  PRODUCT_NAME: 'MaxKey Community Edition',
-  MANUFACTURER: 'MaxKey',
+  PRODUCT_NAME: 'GMC Unified Identity Authentication Platform',
+  MANUFACTURER: 'GMC',
   HOME_PAGE: 'https://www.maxkey.top',
   LICENSE: 'Licensed under the Apache License, Version 2.0'
 };
