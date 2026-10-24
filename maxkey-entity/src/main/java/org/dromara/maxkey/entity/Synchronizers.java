@@ -73,6 +73,9 @@ public class Synchronizers extends JpaEntity implements Serializable {
     String orgBasedn;
     @Column
     String orgFilters;
+    // 钉钉同步的根部门ID，为空时使用1
+    @Column(name = "rootdeptid")
+    String rootDeptId;
     @Column
     String msadDomain;
     @Column
@@ -229,6 +232,14 @@ public class Synchronizers extends JpaEntity implements Serializable {
         this.orgFilters = orgFilters;
     }
 
+    public String getRootDeptId() {
+        return rootDeptId;
+    }
+
+    public void setRootDeptId(String rootDeptId) {
+        this.rootDeptId = rootDeptId;
+    }
+
     public String getMsadDomain() {
         return msadDomain;
     }
@@ -366,6 +377,8 @@ public class Synchronizers extends JpaEntity implements Serializable {
         builder.append(orgBasedn);
         builder.append(", orgFilters=");
         builder.append(orgFilters);
+        builder.append(", rootDeptId=");
+        builder.append(rootDeptId);
         builder.append(", msadDomain=");
         builder.append(msadDomain);
         builder.append(", sslSwitch=");

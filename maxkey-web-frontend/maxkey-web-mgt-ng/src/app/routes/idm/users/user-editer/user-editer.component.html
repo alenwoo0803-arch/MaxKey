@@ -408,6 +408,22 @@
         </div>
         <div nz-row>
           <nz-form-item>
+            <nz-form-label [nzSm]="8" [nzXs]="24" nzFor="deptIds">{{ 'mxk.users.partTimeDept' | i18n }}</nz-form-label>
+            <nz-form-control [nzSm]="16" [nzMd]="16" [nzXs]="36" [nzXl]="48" nzErrorTip="The input is not valid deptIds!">
+              <nz-tree-select
+                [nzNodes]="modalData.treeNodes.nodes"
+                nzShowSearch
+                nzMultiple
+                nzPlaceHolder="Please select"
+                [(ngModel)]="form.model.deptIds"
+                [ngModelOptions]="{ standalone: true }"
+                nzVirtualHeight="300px"
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        <div nz-row>
+          <nz-form-item>
             <nz-form-label [nzSm]="8" [nzXs]="24" nzFor="costCenter">{{ 'mxk.users.costCenter' | i18n }}</nz-form-label>
             <nz-form-control [nzSm]="16" [nzMd]="16" [nzXs]="36" [nzXl]="48" nzErrorTip="The input is not valid departmentId!">
               <input

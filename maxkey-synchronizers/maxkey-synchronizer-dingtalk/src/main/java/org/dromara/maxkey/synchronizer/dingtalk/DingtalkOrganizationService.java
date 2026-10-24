@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dromara.maxkey.constants.ConstsStatus;
 import org.dromara.maxkey.entity.SynchroRelated;
 import org.dromara.maxkey.entity.idm.Organizations;
@@ -51,21 +52,38 @@ public class DingtalkOrganizationService  extends AbstractSynchronizerService im
     final static Logger _logger = LoggerFactory.getLogger(DingtalkOrganizationService.class);
 
     private static final Integer ORG_TYPE = 2;
-    
-    static Long ROOT_DEPT_ID = 1L;
+
+    private static final Long DEFAULT_ROOT_DEPT_ID = 1L;
     
     String access_token;
     
     @Override
     public void sync() {
         _logger.info("Sync Dingtalk Organizations ...");
+        Long rootDeptId = getRootDeptId();
         LinkedBlockingQueue<Long> deptsQueue = new LinkedBlockingQueue<Long>();
-        deptsQueue.add(ROOT_DEPT_ID);
+        deptsQueue.add(rootDeptId);
         try {
             //root
             Organizations rootOrganization = organizationsService.get(Organizations.ROOT_ORG_ID);
-            OapiV2DepartmentGetResponse rootDeptRsp = requestDepartment(access_token,ROOT_DEPT_ID);
-            _logger.debug("root dept   deptId {} , name {} ,  parentId {}" 
+            if (rootOrganization == null) {
+                _logger.error("Sync Dingtalk Organizations aborted, MaxKey root organization {} not found",
+                        Organizations.ROOT_ORG_ID);
+                return;
+            }
+            OapiV2DepartmentGetResponse rootDeptRsp = requestDepartment(access_token,rootDeptId);
+            if (rootDeptRsp == null || rootDeptRsp.getResult() == null) {
+                _logger.error("Sync Dingtalk Organizations aborted, root dept {} is not accessible", rootDeptId);
+                return;
+            }
+            String rootDeptName = rootDeptRsp.getResult().getName();
+            if (StringUtils.isNotBlank(rootDeptName)
+                    && !rootDeptName.equals(rootOrganization.getOrgName())) {
+                rootOrganization.setOrgName(rootDeptName);
+                rootOrganization.setFullName(rootDeptName);
+                organizationsService.update(rootOrganization);
+            }
+            _logger.debug("root dept   deptId {} , name {} ,  parentId {}"
                             ,rootDeptRsp.getResult().getDeptId(), 
                             rootDeptRsp.getResult().getName(),
                             rootDeptRsp.getResult().getParentId());
@@ -77,10 +95,15 @@ public class DingtalkOrganizationService  extends AbstractSynchronizerService im
             
             synchroRelatedService.updateSynchroRelated(
                     this.synchronizer,rootSynchroRelated,Organizations.CLASS_TYPE);
+            updateSynchroRelatedName(rootDeptId, rootDeptName);
             
             while(deptsQueue.element() != null) {
                 OapiV2DepartmentListsubResponse rsp = requestDepartmentList(access_token,deptsQueue.poll());
-                
+                if (rsp == null || rsp.getResult() == null) {
+                    _logger.error("Sync Dingtalk Organizations aborted, sub department list is not accessible");
+                    return;
+                }
+
                 for(DeptBaseResponse dept : rsp.getResult()) {
                     _logger.debug("dept  deptId {} , name {} ,  parentId {} " , 
                             dept.getDeptId(), 
@@ -124,7 +147,19 @@ public class DingtalkOrganizationService  extends AbstractSynchronizerService im
         }catch (NoSuchElementException e) {
             _logger.debug("Sync Department successful .");
         }
-        
+
+        organizationsService.reorgNamePath(synchronizer.getInstId());
+    }
+
+    private void updateSynchroRelatedName(Long deptId, String deptName) {
+        SynchroRelated saved = synchroRelatedService.findByOriginId(
+                synchronizer, String.valueOf(deptId), Organizations.CLASS_TYPE);
+        if (saved != null && StringUtils.isNotBlank(deptName)
+                && !deptName.equals(saved.getObjectName())) {
+            saved.setObjectName(deptName);
+            saved.setOriginName(deptName);
+            synchroRelatedService.update(saved);
+        }
     }
     
     public OapiV2DepartmentListsubResponse requestDepartmentList(String access_token,Long deptId) throws ApiException {
@@ -134,6 +169,11 @@ public class DingtalkOrganizationService  extends AbstractSynchronizerService im
         req.setLanguage("zh_CN");
         OapiV2DepartmentListsubResponse rspDepts = client.execute(req, access_token);
         _logger.trace("response : " + rspDepts.getBody());
+        if (rspDepts.getErrcode() != 0) {
+            _logger.error("DingTalk department list failed, deptId {} , errcode {} , errmsg {}"
+                    , deptId, rspDepts.getErrcode(), rspDepts.getErrmsg());
+            return null;
+        }
         return rspDepts;
     }
     
@@ -144,6 +184,11 @@ public class DingtalkOrganizationService  extends AbstractSynchronizerService im
         req.setLanguage("zh_CN");
         OapiV2DepartmentGetResponse rspDepts = client.execute(req, access_token);
         _logger.trace("response : " + rspDepts.getBody());
+        if (rspDepts.getErrcode() != 0) {
+            _logger.error("DingTalk department get failed, deptId {} , errcode {} , errmsg {}"
+                    , deptId, rspDepts.getErrcode(), rspDepts.getErrmsg());
+            return null;
+        }
         return rspDepts;
     }
     
@@ -225,6 +270,19 @@ public class DingtalkOrganizationService  extends AbstractSynchronizerService im
     }
 
 
+
+    public Long getRootDeptId() {
+        String configuredRootDeptId = synchronizer.getRootDeptId();
+        if (StringUtils.isNotBlank(configuredRootDeptId)) {
+            try {
+                return Long.parseLong(configuredRootDeptId.trim());
+            } catch (NumberFormatException e) {
+                _logger.warn("Invalid rootDeptId {} , use default {}",
+                        configuredRootDeptId, DEFAULT_ROOT_DEPT_ID);
+            }
+        }
+        return DEFAULT_ROOT_DEPT_ID;
+    }
 
     public String getAccess_token() {
         return access_token;

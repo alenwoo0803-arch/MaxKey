@@ -17,6 +17,7 @@
 
 package org.dromara.maxkey.synchronizer.dingtalk;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dromara.maxkey.entity.Synchronizers;
 import org.dromara.maxkey.synchronizer.ISynchronizerService;
 import org.slf4j.Logger;
@@ -50,6 +51,10 @@ public class DingtalkSynchronizerService  implements ISynchronizerService{
         dingtalkAccessTokenService.setAppkey(synchronizer.getPrincipal());
         dingtalkAccessTokenService.setAppsecret(synchronizer.getCredentials());
         String access_token=dingtalkAccessTokenService.requestToken();
+        if (StringUtils.isBlank(access_token)) {
+            _logger.error("Dingtalk access token request failed, check appKey/appSecret and IP whitelist");
+            return;
+        }
         
         dingtalkOrganizationService.setSynchronizer(synchronizer);
         dingtalkOrganizationService.setAccess_token(access_token);

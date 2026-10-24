@@ -1525,6 +1525,7 @@ CREATE TABLE `mxk_synchronizers` (
   `INSTID` varchar(45) NOT NULL,
   `APPID` varchar(45) DEFAULT NULL,
   `APPNAME` varchar(45) DEFAULT NULL,
+  `rootdeptid` varchar(45) DEFAULT NULL COMMENT '钉钉根部门ID',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='同步器';
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1535,7 +1536,7 @@ CREATE TABLE `mxk_synchronizers` (
 
 LOCK TABLES `mxk_synchronizers` WRITE;
 /*!40000 ALTER TABLE `mxk_synchronizers` DISABLE KEYS */;
-INSERT INTO `mxk_synchronizers` VALUES ('1','标准LDAP服务','ldapSynchronizerService','LDAP','111','ldap://101.200.202.61:389',NULL,'cn=Manager,dc=psec,dc=top','$2a$10$Q/lGCwsetv/J7/LEFBmpxu6ba953da1c35a53559a85073a183e1c3f34e52af6134a54452b606d84593870a','00:00','00:00','dc=psec,dc=top','(&(objectClass=inetOrgPerson))','dc=psec,dc=top',NULL,'','0','','',0,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL),('2','微软Active Directory服务','activeDirectorySynchronizerService','MSAD','','ldap://192.168.0.106:389',NULL,'administrator','$2a$10$loVSThrzO0Iz1sbXE4vfE.fa5b6f258aa310bb5951251d35673f0fc516dfa4d4bdac06b78c0a9c28b2d854bfbc75ac9db415d0','16:30','23:00','OU=mxkusers,dc=maxkey,dc=top','(&(objectClass=User))',NULL,NULL,'MAXKEY','false','maxkey','maxkey',0,'1',NULL,NULL,NULL,NULL,'ss','1',NULL,NULL),('3','钉钉','dingtalkSynchronizerService','API','','https://oapi.dingtalk.com/topapi',NULL,'dingz9lt0qxc3ikvf0us','$2a$10$FcqFQ5FugTF085wIfOZWMe022739b6bb2e4e38370d170a1aebfe9e18ca620469f6da63993f83439b350113109a91639ca5a34b544f1382a23fbd51172680447ee616c6be9c7a81ccfa862b0773b297fe23feeb4d2d2e8b1224ea675adf91cc3700094a','00:00','00:00',NULL,NULL,NULL,NULL,NULL,'0',NULL,NULL,0,'1',NULL,NULL,NULL,NULL,'111','1',NULL,NULL),('4','企业微信','workweixinSynchronizerService','API','','https://qyapi.weixin.qq.com/cgi-bin',NULL,'wx960faa51fbef5127','$2a$10$5QLw5TnlzhNk2AzKL9yYrO3128321745e4c1c77c800008ad68bedaf3c8fe6a5b42d10d1f5bad0bc969b2a134ca514f49756765a0829b37dd7a22e273ad8dd98981b2d36fd2f253102b501e100ec690184f3669','00:00','00:00',NULL,NULL,NULL,NULL,NULL,'0',NULL,NULL,0,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL),('5','北森HR数据同步','beiSenSynchronizerService','API','','https://openapi.italent.cn',NULL,'111','$2a$10$WesRIfWiehDcirIp9cNlAub05899a95f1672baf97557b03b45cf3836d7494e571be2adebf55677c3ab4d8f','00:00','00:00',NULL,NULL,NULL,NULL,NULL,'0',NULL,NULL,14,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL),('6','飞书','feishuSynchronizerService','API','','https://open.feishu.cn/open-apis',NULL,'cli_a1615958b0381013','$2a$10$qCSqOngrcgTf.nbZzY0mte36ac32a53468f8ddaaab7c368fd0514dd7549a5c6f919d48645d8e9b0acf6ee357c56f2a826ab7dafcf938ad6cd4e776e1d452ac7aefeccc','00:00','00:00',NULL,NULL,NULL,NULL,NULL,'0',NULL,NULL,0,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL),('7','标准JDBC数据库服务','jdbcSynchronizerService','DB','','jdbc:mysql://localhost:3306/maxkey','com.mysql.cj.jdbc.Driver','cli_a1615958b0381013','$2a$10$MDjH1dETQFLurVpFPgDMZe32d9be6499c082ec1378c3036c21017baea936da20b552b3d6800f7ecb8664e6467986779521df7c784b5af28840e3bd2290debaab38aa6b','00:00','00:00',NULL,'select * from mxk_user_info',NULL,'select * from mxk_org_info',NULL,'0',NULL,NULL,0,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL);
+INSERT INTO `mxk_synchronizers` VALUES ('1','标准LDAP服务','ldapSynchronizerService','LDAP','111','ldap://101.200.202.61:389',NULL,'cn=Manager,dc=psec,dc=top','$2a$10$Q/lGCwsetv/J7/LEFBmpxu6ba953da1c35a53559a85073a183e1c3f34e52af6134a54452b606d84593870a','00:00','00:00','dc=psec,dc=top','(&(objectClass=inetOrgPerson))','dc=psec,dc=top',NULL,'','0','','',0,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL,NULL),('2','微软Active Directory服务','activeDirectorySynchronizerService','MSAD','','ldap://192.168.0.106:389',NULL,'administrator','$2a$10$loVSThrzO0Iz1sbXE4vfE.fa5b6f258aa310bb5951251d35673f0fc516dfa4d4bdac06b78c0a9c28b2d854bfbc75ac9db415d0','16:30','23:00','OU=mxkusers,dc=maxkey,dc=top','(&(objectClass=User))',NULL,NULL,'MAXKEY','false','maxkey','maxkey',0,'1',NULL,NULL,NULL,NULL,'ss','1',NULL,NULL,NULL),('3','钉钉','dingtalkSynchronizerService','API','','https://oapi.dingtalk.com/topapi',NULL,'dingz9lt0qxc3ikvf0us','$2a$10$FcqFQ5FugTF085wIfOZWMe022739b6bb2e4e38370d170a1aebfe9e18ca620469f6da63993f83439b350113109a91639ca5a34b544f1382a23fbd51172680447ee616c6be9c7a81ccfa862b0773b297fe23feeb4d2d2e8b1224ea675adf91cc3700094a','00:00','00:00',NULL,NULL,NULL,NULL,NULL,'0',NULL,NULL,0,'1',NULL,NULL,NULL,NULL,'111','1',NULL,NULL,NULL),('4','企业微信','workweixinSynchronizerService','API','','https://qyapi.weixin.qq.com/cgi-bin',NULL,'wx960faa51fbef5127','$2a$10$5QLw5TnlzhNk2AzKL9yYrO3128321745e4c1c77c800008ad68bedaf3c8fe6a5b42d10d1f5bad0bc969b2a134ca514f49756765a0829b37dd7a22e273ad8dd98981b2d36fd2f253102b501e100ec690184f3669','00:00','00:00',NULL,NULL,NULL,NULL,NULL,'0',NULL,NULL,0,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL,NULL),('5','北森HR数据同步','beiSenSynchronizerService','API','','https://openapi.italent.cn',NULL,'111','$2a$10$WesRIfWiehDcirIp9cNlAub05899a95f1672baf97557b03b45cf3836d7494e571be2adebf55677c3ab4d8f','00:00','00:00',NULL,NULL,NULL,NULL,NULL,'0',NULL,NULL,14,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL,NULL),('6','飞书','feishuSynchronizerService','API','','https://open.feishu.cn/open-apis',NULL,'cli_a1615958b0381013','$2a$10$qCSqOngrcgTf.nbZzY0mte36ac32a53468f8ddaaab7c368fd0514dd7549a5c6f919d48645d8e9b0acf6ee357c56f2a826ab7dafcf938ad6cd4e776e1d452ac7aefeccc','00:00','00:00',NULL,NULL,NULL,NULL,NULL,'0',NULL,NULL,0,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL,NULL),('7','标准JDBC数据库服务','jdbcSynchronizerService','DB','','jdbc:mysql://localhost:3306/maxkey','com.mysql.cj.jdbc.Driver','cli_a1615958b0381013','$2a$10$MDjH1dETQFLurVpFPgDMZe32d9be6499c082ec1378c3036c21017baea936da20b552b3d6800f7ecb8664e6467986779521df7c784b5af28840e3bd2290debaab38aa6b','00:00','00:00',NULL,'select * from mxk_user_info',NULL,'select * from mxk_org_info',NULL,'0',NULL,NULL,0,'1',NULL,NULL,NULL,NULL,'','1',NULL,NULL,NULL);
 /*!40000 ALTER TABLE `mxk_synchronizers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1724,5 +1725,23 @@ UNLOCK TABLES;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+--
+-- Table structure for table `mxk_userinfo_dept`
+--
+
+DROP TABLE IF EXISTS `mxk_userinfo_dept`;
+CREATE TABLE `mxk_userinfo_dept` (
+  `id` varchar(45) NOT NULL,
+  `userid` varchar(45) NOT NULL COMMENT '用户ID',
+  `departmentid` varchar(45) NOT NULL COMMENT '兼任部门ID',
+  `department` varchar(200) DEFAULT NULL COMMENT '兼任部门',
+  `instid` varchar(45) NOT NULL,
+  `createddate` datetime DEFAULT CURRENT_TIMESTAMP,
+  `modifieddate` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_userinfo_dept` (`userid`,`departmentid`,`instid`),
+  KEY `idx_userinfo_dept_dept` (`departmentid`,`instid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='用户兼任部门';
 
 -- Dump completed on 2026-07-21 16:17:25

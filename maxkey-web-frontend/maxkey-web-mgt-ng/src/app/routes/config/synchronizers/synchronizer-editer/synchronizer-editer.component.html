@@ -77,6 +77,21 @@
         />
       </nz-form-control>
     </nz-form-item>
+    @if (form.model.service == 'dingtalkSynchronizerService') {
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="rootDeptId">{{ 'mxk.synchronizers.rootDeptId' | i18n }} </nz-form-label>
+        <nz-form-control [nzSm]="18" [nzMd]="18" [nzXs]="36" [nzXl]="48" nzErrorTip="The input is not valid rootDeptId!">
+          <input
+            [(ngModel)]="form.model.rootDeptId"
+            [ngModelOptions]="{ standalone: true }"
+            nz-input
+            name="rootDeptId"
+            id="rootDeptId"
+            placeholder="{{ 'mxk.synchronizers.rootDeptIdTip' | i18n }}"
+          />
+        </nz-form-control>
+      </nz-form-item>
+    }
     @if (form.model.sourceType == 'LDAP' || form.model.sourceType == 'MSAD') {
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="userBasedn">{{ 'mxk.synchronizers.userBasedn' | i18n }} </nz-form-label>

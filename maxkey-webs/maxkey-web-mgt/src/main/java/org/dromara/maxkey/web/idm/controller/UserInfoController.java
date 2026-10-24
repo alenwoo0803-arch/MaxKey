@@ -41,9 +41,13 @@ import org.dromara.maxkey.constants.ConstsPasswordSetType;
 import org.dromara.maxkey.entity.ChangePassword;
 import org.dromara.maxkey.entity.ExcelImport;
 import org.dromara.maxkey.entity.Message;
+import org.dromara.maxkey.entity.idm.Organizations;
 import org.dromara.maxkey.entity.idm.UserInfo;
+import org.dromara.maxkey.entity.idm.UserInfoDept;
 import org.dromara.maxkey.persistence.service.FileUploadService;
 import org.dromara.maxkey.persistence.service.HistorySystemLogsService;
+import org.dromara.maxkey.persistence.service.OrganizationsService;
+import org.dromara.maxkey.persistence.service.UserInfoDeptService;
 import org.dromara.maxkey.persistence.service.UserInfoService;
 import org.dromara.maxkey.util.ExcelUtils;
 import org.dromara.maxkey.util.JsonUtils;
@@ -70,6 +74,12 @@ public class UserInfoController {
     
     @Autowired
     UserInfoService userInfoService;
+
+    @Autowired
+    UserInfoDeptService userInfoDeptService;
+
+    @Autowired
+    OrganizationsService organizationsService;
     
     @Autowired
     FileUploadService fileUploadService;
@@ -102,6 +112,11 @@ public class UserInfoController {
     public Message<?> get(@PathVariable String id,@CurrentUser UserInfo currentUser) {
         UserInfo userInfo=userInfoService.get(id,currentUser.getInstId());
         userInfo.trans();
+        userInfo.setDeptIds(
+                userInfoDeptService.findByUserId(userInfo.getId(), currentUser.getInstId())
+                        .stream()
+                        .map(UserInfoDept::getDepartmentId)
+                        .collect(Collectors.toList()));
         return new Message<UserInfo>(userInfo);
     }
     
@@ -123,10 +138,11 @@ public class UserInfoController {
             fileUploadService.delete(userInfo.getPictureId());
         }
         if (userInfoService.insert(userInfo)) {
+            saveUserDepts(userInfo, currentUser.getInstId());
             systemLog.insert(
-                    ConstsEntryType.USERINFO, 
-                    userInfo, 
-                    ConstsAct.CREATE, 
+                    ConstsEntryType.USERINFO,
+                    userInfo,
+                    ConstsAct.CREATE,
                     ConstsActResult.SUCCESS, 
                     currentUser);
             return new Message<UserInfo>(Message.SUCCESS);
@@ -151,10 +167,11 @@ public class UserInfoController {
             fileUploadService.delete(userInfo.getPictureId());
         }
         if (userInfoService.update(userInfo)) {
+            saveUserDepts(userInfo, currentUser.getInstId());
             systemLog.insert(
-                    ConstsEntryType.USERINFO, 
-                    userInfo, 
-                    ConstsAct.UPDATE, 
+                    ConstsEntryType.USERINFO,
+                    userInfo,
+                    ConstsAct.UPDATE,
                     ConstsActResult.SUCCESS, 
                     currentUser);
             return new Message<UserInfo>(Message.SUCCESS);
@@ -169,6 +186,9 @@ public class UserInfoController {
         logger.debug("-delete  ids : {} " , ids);
         
         if (userInfoService.deleteBatch(ids,currentUser.getInstId())) {
+            for (String id : ids) {
+                userInfoDeptService.replaceUserDepts(id, currentUser.getInstId(), new ArrayList<>());
+            }
             systemLog.insert(
                     ConstsEntryType.USERINFO, 
                     ids, 
@@ -192,6 +212,23 @@ public class UserInfoController {
     }
        
     
+    protected void saveUserDepts(UserInfo userInfo, String instId) {
+        List<UserInfoDept> depts = new ArrayList<>();
+        if (userInfo.getDeptIds() != null) {
+            for (String deptId : userInfo.getDeptIds()) {
+                if (StringUtils.isBlank(deptId) || deptId.equals(userInfo.getDepartmentId())) {
+                    continue;
+                }
+                Organizations organization = organizationsService.get(deptId, instId);
+                if (organization != null) {
+                    depts.add(new UserInfoDept(
+                            userInfo.getId(), organization.getId(), organization.getOrgName(), instId));
+                }
+            }
+        }
+        userInfoDeptService.replaceUserDepts(userInfo.getId(), instId, depts);
+    }
+
     protected void convertExtraAttribute(UserInfo userInfo) {
         if(userInfo.getExtraAttributeValue()!=null){
             String []extraAttributeLabel=userInfo.getExtraAttributeName().split(",");

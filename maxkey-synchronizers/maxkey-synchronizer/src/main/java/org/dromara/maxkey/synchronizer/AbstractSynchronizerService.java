@@ -30,6 +30,7 @@ import org.dromara.maxkey.persistence.service.OrganizationsService;
 import org.dromara.maxkey.persistence.service.SocialsAssociatesService;
 import org.dromara.maxkey.persistence.service.SynchroAssociationService;
 import org.dromara.maxkey.persistence.service.SynchroRelatedService;
+import org.dromara.maxkey.persistence.service.UserInfoDeptService;
 import org.dromara.maxkey.persistence.service.UserInfoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,9 @@ public abstract class AbstractSynchronizerService {
     
     @Autowired
     protected UserInfoService userInfoService;
+
+    @Autowired
+    protected UserInfoDeptService userInfoDeptService;
     
     @Autowired
     protected SynchroRelatedService synchroRelatedService;
