@@ -94,12 +94,17 @@ public class OrganizationsServiceImpl  extends JpaServiceImpl<OrganizationsMappe
         Organizations rootOrg = null;
         for (Organizations org : orgList) {
             reorgOrgMap.put(org.getId(), org);
-            if (isRootOrg(org)) {
+            if (isRootOrg(org)
+                    && (rootOrg == null || org.getId().equalsIgnoreCase(instId))) {
                 rootOrg = org;
             }
             Organizations cloneOrg = new Organizations();
             BeanUtils.copyProperties(org, cloneOrg);
             originOrgList.add(cloneOrg);
+        }
+        if (rootOrg == null) {
+            _logger.warn("reorgNamePath skipped, root organization not found for instId {}", instId);
+            return;
         }
         try {
             reorg(reorgOrgMap, orgList, rootOrg);
@@ -122,7 +127,7 @@ public class OrganizationsServiceImpl  extends JpaServiceImpl<OrganizationsMappe
     boolean isRootOrg(Organizations rootOrg) {
         if (rootOrg.getParentId() == null || "-1".equalsIgnoreCase(rootOrg.getParentId())
                 || rootOrg.getParentId().equalsIgnoreCase(rootOrg.getId())
-                || rootOrg.getParentId().equalsIgnoreCase(rootOrg.getInstId())) {
+                || rootOrg.getId().equalsIgnoreCase(rootOrg.getInstId())) {
             return true;
         }
         return false;

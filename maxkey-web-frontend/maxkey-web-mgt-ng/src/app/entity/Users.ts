@@ -117,6 +117,7 @@ export class Users extends BaseEntity {
   division!: string;
   departmentId!: string;
   department!: string;
+  deptIds: string[] = [];
   jobTitle!: string;
   jobLevel!: string;
   managerId!: string;

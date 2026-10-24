@@ -299,6 +299,9 @@ public class UserInfo extends JpaEntity  implements Serializable {
     String originId2;
     
     List<Organizations> depts;
+
+    // 兼任部门ID列表，主部门仍为 departmentId
+    List<String> deptIds;
     
     public static class ONLINE {
         // 在线
@@ -1359,6 +1362,14 @@ public class UserInfo extends JpaEntity  implements Serializable {
 
     public void setDepts(List<Organizations> depts) {
         this.depts = depts;
+    }
+
+    public List<String> getDeptIds() {
+        return deptIds;
+    }
+
+    public void setDeptIds(List<String> deptIds) {
+        this.deptIds = deptIds;
     }
 
     public String getInstId() {

@@ -35,6 +35,7 @@ export class Synchronizers extends BaseEntity {
   userFilters!: string;
   orgBasedn!: string;
   orgFilters!: string;
+  rootDeptId!: string;
   msadDomain!: string;
   trustStore!: string;
   trustStorePassword!: string;

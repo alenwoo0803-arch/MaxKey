@@ -18,7 +18,10 @@
 package org.dromara.maxkey.synchronizer.dingtalk;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dromara.maxkey.constants.ConstsStatus;
 import org.dromara.maxkey.entity.SynchroRelated;
 import org.dromara.maxkey.entity.idm.UserInfo;
+import org.dromara.maxkey.entity.idm.UserInfoDept;
 import org.dromara.maxkey.synchronizer.AbstractSynchronizerService;
 import org.dromara.maxkey.synchronizer.ISynchronizerService;
 import org.dromara.maxkey.entity.SynchroAssociation;
@@ -55,31 +59,44 @@ public class DingtalkUsersService  extends AbstractSynchronizerService implement
     public void sync() {
         _logger.info("Sync Dingtalk Users...");
         try {
-            List<SynchroRelated> synchroRelateds = 
+            List<SynchroRelated> synchroRelateds =
                     synchroRelatedService.findOrgs(this.synchronizer);
-            
+            Map<String, SynchroRelated> deptMappings = new HashMap<>();
+            for(SynchroRelated relatedOrg : synchroRelateds) {
+                deptMappings.put(relatedOrg.getOriginId(), relatedOrg);
+            }
+            Map<String, UserSyncInfo> userSyncMap = new LinkedHashMap<>();
+
             for(SynchroRelated relatedOrg : synchroRelateds) {
                 DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/v2/user/list");
-                OapiV2UserListRequest req = new OapiV2UserListRequest();
                 _logger.debug("DingTalk deptId : {}" , relatedOrg.getOriginId());
-                req.setDeptId(Long.parseLong(relatedOrg.getOriginId()));
-                req.setCursor(0L);
-                req.setSize(100L);
-                req.setOrderField("modify_desc");
-                req.setContainAccessLimit(true);
-                req.setLanguage("zh_CN");
-                OapiV2UserListResponse rsp = client.execute(req, access_token);
-                _logger.trace("response : {}" , rsp.getBody());
-                
-                if(rsp.getErrcode()==0) {
+                Long cursor = 0L;
+                boolean hasMore = true;
+                while(hasMore && cursor != null) {
+                    OapiV2UserListRequest req = new OapiV2UserListRequest();
+                    req.setDeptId(Long.parseLong(relatedOrg.getOriginId()));
+                    req.setCursor(cursor);
+                    req.setSize(100L);
+                    req.setOrderField("modify_desc");
+                    req.setContainAccessLimit(true);
+                    req.setLanguage("zh_CN");
+                    OapiV2UserListResponse rsp = client.execute(req, access_token);
+                    _logger.trace("response : {}" , rsp.getBody());
+
+                    if(rsp.getErrcode()!=0) {
+                        _logger.error("DingTalk user list failed, deptId {} , errcode {} , errmsg {}"
+                                , relatedOrg.getOriginId(), rsp.getErrcode(), rsp.getErrmsg());
+                        break;
+                    }
+
                     for(ListUserResponse user :rsp.getResult().getList()) {
                         _logger.debug("name : {} , {} , {}", user.getName(),user.getLoginId(),user.getUserid());
-                        
+
                         UserInfo userInfo  = buildUserInfoByFieldMap(user,relatedOrg);
                         _logger.trace("userInfo {}" , userInfo);
                         userInfo.setPassword(userInfo.getUsername() + UserInfo.DEFAULT_PASSWORD_SUFFIX);
                         userInfoService.saveOrUpdate(userInfo);
-                        
+
                         SynchroRelated synchroRelated = new SynchroRelated(
                                 userInfo.getId(),
                                 userInfo.getUsername(),
@@ -94,10 +111,25 @@ public class DingtalkUsersService  extends AbstractSynchronizerService implement
                                 synchronizer.getInstId());
                         synchroRelatedService.updateSynchroRelated(
                                 this.synchronizer,synchroRelated,UserInfo.CLASS_TYPE);
-                        
+
                         socialsAssociate(synchroRelated,"dingtalk");
+
+                        UserSyncInfo userSync = userSyncMap.computeIfAbsent(
+                                userInfo.getId(), k -> new UserSyncInfo(userInfo));
+                        if(user.getDeptIdList() == null || user.getDeptIdList().isEmpty()) {
+                            userSync.addDepartment(Long.parseLong(relatedOrg.getOriginId()));
+                        }else {
+                            userSync.addDepartments(user.getDeptIdList());
+                        }
                     }
+
+                    hasMore = Boolean.TRUE.equals(rsp.getResult().getHasMore());
+                    cursor = rsp.getResult().getNextCursor();
                 }
+            }
+
+            for(UserSyncInfo userSync : userSyncMap.values()) {
+                saveUserDepartments(userSync, deptMappings);
             }
 
             
@@ -105,6 +137,71 @@ public class DingtalkUsersService  extends AbstractSynchronizerService implement
             e.printStackTrace();
         }
         
+    }
+
+    private static class UserSyncInfo {
+        final UserInfo userInfo;
+        final LinkedHashSet<Long> deptIds = new LinkedHashSet<>();
+
+        UserSyncInfo(UserInfo userInfo) {
+            this.userInfo = userInfo;
+        }
+
+        void addDepartment(Long deptId) {
+            if (deptId != null) {
+                deptIds.add(deptId);
+            }
+        }
+
+        void addDepartments(List<Long> deptIdList) {
+            for (Long deptId : deptIdList) {
+                addDepartment(deptId);
+            }
+        }
+    }
+
+    /**
+     * 钉钉返回的部门列表中第一个作为主部门，其余写入兼任部门表。
+     */
+    private void saveUserDepartments(UserSyncInfo userSync, Map<String, SynchroRelated> deptMappings) {
+        List<SynchroRelated> departments = new ArrayList<>();
+        for (Long deptId : userSync.deptIds) {
+            SynchroRelated department = deptMappings.get(String.valueOf(deptId));
+            if (department != null && !containsDepartment(departments, department.getObjectId())) {
+                departments.add(department);
+            }
+        }
+        if (departments.isEmpty()) {
+            userInfoDeptService.replaceUserDepts(
+                    userSync.userInfo.getId(), synchronizer.getInstId(), new ArrayList<>());
+            return;
+        }
+
+        SynchroRelated primary = departments.get(0);
+        userSync.userInfo.setDepartmentId(primary.getObjectId());
+        userSync.userInfo.setDepartment(primary.getObjectName());
+        userInfoService.update(userSync.userInfo);
+
+        List<UserInfoDept> adjunctDepts = new ArrayList<>();
+        for (int i = 1; i < departments.size(); i++) {
+            SynchroRelated department = departments.get(i);
+            adjunctDepts.add(new UserInfoDept(
+                    null,
+                    department.getObjectId(),
+                    department.getObjectName(),
+                    synchronizer.getInstId()));
+        }
+        userInfoDeptService.replaceUserDepts(
+                userSync.userInfo.getId(), synchronizer.getInstId(), adjunctDepts);
+    }
+
+    private boolean containsDepartment(List<SynchroRelated> departments, String objectId) {
+        for (SynchroRelated department : departments) {
+            if (department.getObjectId().equals(objectId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public UserInfo buildUserInfo(ListUserResponse user,SynchroRelated relatedOrg) {

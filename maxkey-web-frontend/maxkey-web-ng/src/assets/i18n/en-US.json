@@ -1,9 +1,9 @@
 {
-	"app.title": "Single Sign On System",
+	"app.title": "GMC Unified Identity Authentication Platform",
 	"mxk": {
-		"title": " Single Sign On System",
+		"title": " Unified Identity Authentication Platform",
 		"login": {
-			"title": "MaxKey",
+			"title": "GMC",
 			"title.sub": "Leading-Edge Identity and Access Management",
 			"tab-credentials": "Account",
 			"tab-mobile": "Mobile",

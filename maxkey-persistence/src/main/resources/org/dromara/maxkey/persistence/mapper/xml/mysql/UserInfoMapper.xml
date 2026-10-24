@@ -57,7 +57,8 @@
 			and displayname   like   concat('%',#{displayName},'%') 
 		</if>
 		<if test="departmentId != null and departmentId != ''">
-			and departmentid = #{departmentId}
+			and (departmentid = #{departmentId}
+				or id in (select userid from mxk_userinfo_dept where departmentid = #{departmentId} and instid = #{instId}))
 		</if>
 		order by status,sortindex,id 
 	</select>

@@ -47,10 +47,10 @@ public class LoginConfig {
     @Value("${maxkey.login.registration:false}")
     boolean registration;
     
-    @Value("${maxkey.login.cas.serverUrlPrefix:http://sso.maxkey.top/sign/authz/cas}")
+    @Value("${maxkey.login.cas.serverUrlPrefix:http://localhost:9527/sign/authz/cas}")
     String casServerUrlPrefix;
-    
-    @Value("${maxkey.login.cas.service:http://mgt.maxkey.top/maxkey-mgt/passport/trust/auth}")
+
+    @Value("${maxkey.login.cas.service:http://localhost:8526/maxkey-mgt/#/passport/trust/auth}")
     String casService;
 
     /**
